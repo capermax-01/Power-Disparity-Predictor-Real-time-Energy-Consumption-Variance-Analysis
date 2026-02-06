@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "energy-waste-detector"
+version = "2.0.0"
+description = "ML-powered energy waste detection system with actionable insights"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = {text = "MIT"}
+authors = [
+    {name = "Energy Waste Detection Team", email = "team@example.com"}
+]
+keywords = ["energy", "waste", "detection", "ml", "xgboost", "fastapi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "fastapi==0.104.1",
+    "uvicorn[standard]==0.24.0",
+    "pandas==2.1.3",
+    "numpy==1.26.2",
+    "scikit-learn==1.3.2",
+    "xgboost==2.0.3",
+    "joblib==1.3.2",
+    "pydantic==2.5.0",
+    "pydantic-settings==2.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.3",
+    "pytest-cov==4.1.0",
+    "black==23.12.0",
+    "flake8==6.1.0",
+    "mypy==1.7.0",
+]
+
+[tool.setuptools]
+packages = ["energy_waste_detector"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 100

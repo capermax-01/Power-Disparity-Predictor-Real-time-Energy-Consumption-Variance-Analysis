@@ -1,0 +1,21 @@
+{
+  "buildCommand": "pip install -r requirements.txt",
+  "devCommand": "python serve_waste_detection.py",
+  "installCommand": "pip install -r requirements.txt",
+  "framework": "python",
+  "runtime": "python3.11",
+  "env": {
+    "PYTHONUNBUFFERED": "1"
+  },
+  "regions": ["sfo1", "iad1"],
+  "functions": {
+    "serve_waste_detection.py": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "app.py": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
+}
