@@ -1,0 +1,1 @@
+# Power-Disparity-Predictor-Real-time-Energy-Consumption-Variance-Analysis
