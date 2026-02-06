@@ -33,6 +33,13 @@ ENV/
 env/
 .venv
 
+# Node.js & Frontend
+node_modules/
+frontend/node_modules/
+frontend/.env.local
+frontend/dist/
+frontend/.vite
+
 # IDE
 .vscode/
 .idea/
@@ -47,6 +54,15 @@ Thumbs.db
 # Large data files
 *.csv
 *.xlsx
+
+# Model cache
+.pytest_cache/
+.cache/
+
+# Environment files
+.env
+.env.local
+.env.*.local
 
 # Cache
 .cache/

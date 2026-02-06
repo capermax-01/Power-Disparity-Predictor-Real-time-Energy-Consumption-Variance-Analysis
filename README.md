@@ -1,24 +1,99 @@
-# Energy Consumption Prediction System
+# Power Disparity Predictor - Real-time Energy Consumption Variance Analysis
 
-A complete machine learning pipeline for predicting appliance energy consumption using XGBoost and FastAPI.
+A complete full-stack ML application for predicting and analyzing power consumption disparity across appliances using Python backend (FastAPI + GradientBoosting) and React/Vite frontend.
 
-## Project Structure
+## 🎯 Project Overview
+
+- **Backend:** FastAPI server with 96.74% R² accuracy model prediction
+- **Frontend:** Modern React + Vite UI with real-time predictions
+- **Database:** SQLite with 213.4M records from 42 appliances
+- **Model:** GradientBoostingRegressor with 15 engineered features
+- **Deployment:** Full-stack Docker-ready application
+
+## 📁 Project Structure
 
 ```
 energy_waste_demo/
-├── archive/                          # Original appliance CSV files
-├── models/                           # Trained model artifacts
-│   ├── xgb_energy_model.pkl         # Trained XGBoost model
-│   ├── label_encoders.pkl           # Categorical encoders
-│   └── feature_names.pkl            # Feature names
-├── appliances_consolidated.db        # SQLite database with all appliance data
-├── appliances_sample_100k.csv        # Sample of consolidated data
-├── consolidate_appliances.py         # Script to consolidate archive CSVs
-├── train_xgb_model.py               # Script to train XGBoost model
-├── app.py                           # FastAPI application
+├── frontend/                         # React + Vite frontend application
+│   ├── components/                   # Reusable React components
+│   ├── pages/                        # Page components
+│   ├── App.tsx                      # Main App component
+│   ├── index.tsx                    # Entry point
+│   ├── vite.config.ts               # Vite configuration
+│   ├── tsconfig.json                # TypeScript configuration
+│   ├── package.json                 # Frontend dependencies
+│   └── README.md                    # Frontend setup guide
+├── backend/                          # Python backend (root level)
+│   ├── serve_model.py               # FastAPI server
+│   ├── train_and_save_model.py      # Model training pipeline
+│   ├── comprehensive_disparity_analysis.py  # Data analysis
+│   └── consolidate_appliances.py    # Database consolidation
+├── models/                           # Trained ML model artifacts
+│   ├── power_disparity_model.pkl    # Trained model
+│   ├── feature_scaler.pkl           # Feature normalization
+│   ├── label_encoders.pkl           # Category encoders
+│   ├── feature_names.json           # Feature metadata
+│   └── model_metadata.json          # Model information
+├── appliances_consolidated.db        # SQLite database (213.4M records)
 ├── requirements.txt                 # Python dependencies
+├── SETUP.md                         # Installation guide
+├── LICENSE                          # MIT License
 └── README.md                        # This file
 ```
+
+## ⚡ Quick Start (Both Backend & Frontend)
+
+### Prerequisites
+- **Python 3.12+**
+- **Node.js 18+** and npm
+- **Git**
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/capermax-01/Power-Disparity-Predictor-Real-time-Energy-Consumption-Variance-Analysis.git
+cd energy_waste_demo
+```
+
+### 2. Backend Setup & Run
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start FastAPI backend (runs on http://localhost:8000)
+python3.12 serve_model.py
+```
+
+Backend output:
+```
+================================================================================
+POWER DISPARITY PREDICTION SERVER - STARTING
+================================================================================
+✅ Model loaded successfully!
+   Features: 15
+   Model Type: GradientBoostingRegressor
+   Status: Ready for predictions
+================================================================================
+INFO:     Uvicorn running on http://0.0.0.0:8000
+```
+
+### 3. Frontend Setup & Run (NEW TERMINAL)
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server (runs on http://localhost:5173)
+npm run dev
+```
+
+### 4. Access Application
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:8000
+- **API Docs:** http://localhost:8000/docs
+
+---
 
 ## Installation
 
