@@ -1,0 +1,21 @@
+XGBoost Energy Prediction Model
+==================================================
+
+Features: 12
+Feature List:
+  - hour
+  - day_of_week
+  - day_of_month
+  - month
+  - quarter
+  - is_weekend
+  - appliance_id_encoded
+  - appliance_category_encoded
+  - power_max
+  - power_ratio
+  - power_rolling_mean_24
+  - power_rolling_std_24
+
+Label Encoders:
+  - appliance_id
+  - appliance_category

@@ -1,0 +1,57 @@
+# Database files (too large)
+*.db
+*.sqlite
+
+# Archive folders
+archive/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large data files
+*.csv
+*.xlsx
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Model files (optional - uncomment if you want to version control)
+# models/*.pkl
+# models/*.joblib

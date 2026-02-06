@@ -1,0 +1,1 @@
+["hour", "day_of_week", "day_of_month", "month", "is_weekend", "appliance_id_encoded", "appliance_category_encoded", "power_reading", "power_max", "power_std_6h", "power_mean_6h", "power_std_12h", "power_mean_12h", "power_std_24h", "power_mean_24h"]
