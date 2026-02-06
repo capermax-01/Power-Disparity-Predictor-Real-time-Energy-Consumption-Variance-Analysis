@@ -1,84 +1,12 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alex Rivera | Digital Designer</title>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-    <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              primary: '#1754cf',
-              'background-light': '#f6f6f8',
-              'background-dark': '#111621',
-            },
-            fontFamily: {
-              display: ['Inter', 'sans-serif'],
-              serif: ['Playfair Display', 'serif']
-            },
-            borderRadius: {
-              'DEFAULT': '0.25rem',
-              'lg': '0.5rem',
-              'xl': '0.75rem',
-              'full': '9999px',
-            },
-          },
-        },
-      }
-    </script>
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      .serif-title {
-        font-family: 'Playfair Display', serif;
-      }
-      .masonry-grid {
-        column-count: 1;
-        column-gap: 1.5rem;
-      }
-      @media (min-width: 640px) {
-        .masonry-grid {
-          column-count: 2;
-        }
-      }
-      @media (min-width: 1024px) {
-        .masonry-grid {
-          column-count: 3;
-        }
-      }
-      .masonry-item {
-        break-inside: avoid;
-        margin-bottom: 1.5rem;
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
-  <body class="bg-background-light text-[#111318] transition-colors duration-300">
+    <title>Power Disparity Predictor</title>
+  </head>
+  <body>
     <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
