@@ -12,10 +12,12 @@ from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import joblib
 from pathlib import Path
 import warnings
+from config import DB_PATH, MODEL_DIR, ENERGY_SAMPLE_SIZE, TEST_SIZE, RANDOM_STATE
+
 warnings.filterwarnings('ignore')
 
 class ApplianceEnergyPredictor:
-    def __init__(self, db_path, model_output_dir):
+    def __init__(self, db_path=DB_PATH, model_output_dir=MODEL_DIR):
         self.db_path = db_path
         self.model_output_dir = Path(model_output_dir)
         self.model_output_dir.mkdir(exist_ok=True)
@@ -66,18 +68,21 @@ class ApplianceEnergyPredictor:
             else:
                 df[col + '_encoded'] = self.label_encoders[col].transform(df[col].astype(str))
         
+        # Rolling statistics (Apply shift(1) to avoid target leakage)
+        df = df.sort_values(['appliance_id', 'timestamp']).reset_index(drop=True)
+        
+        df['power_rolling_mean_24'] = df.groupby('appliance_id')['power_reading'].transform(
+            lambda x: x.rolling(window=24, min_periods=1).mean().shift(1)
+        ).bfill().fillna(0)
+
+        df['power_rolling_std_24'] = df.groupby('appliance_id')['power_reading'].transform(
+            lambda x: x.rolling(window=24, min_periods=1).std().shift(1)
+        ).fillna(0)
+
         # Handle power_max
         df['power_max'] = df['power_max'].fillna(df['power_reading'].mean())
-        df['power_ratio'] = df['power_reading'] / (df['power_max'] + 1)
-        
-        # Rolling statistics
-        df = df.sort_values('timestamp').reset_index(drop=True)
-        df['power_rolling_mean_24'] = df.groupby('appliance_id')['power_reading'].transform(
-            lambda x: x.rolling(window=24, min_periods=1).mean()
-        )
-        df['power_rolling_std_24'] = df.groupby('appliance_id')['power_reading'].transform(
-            lambda x: x.rolling(window=24, min_periods=1).std()
-        ).fillna(0)
+        # power_ratio now uses rolling mean instead of current reading to avoid leakage
+        df['power_ratio'] = df['power_rolling_mean_24'] / (df['power_max'] + 1)
         
         print("✓ Features engineered")
         return df
@@ -245,10 +250,7 @@ class ApplianceEnergyPredictor:
 
 
 def main():
-    db_path = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\appliances_consolidated.db"
-    output_dir = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\models"
-    
-    predictor = ApplianceEnergyPredictor(db_path, output_dir)
+    predictor = ApplianceEnergyPredictor()
     metrics, importance = predictor.run_training_pipeline()
     
     print("\n" + "="*70)

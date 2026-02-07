@@ -1,29 +1,139 @@
-"""
-FastAPI application for XGBoost energy prediction model
-"""
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from typing import List, Optional
+import os
+from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Union
+
 import joblib
 import numpy as np
-import xgboost as xgb
-from pathlib import Path
-import json
-from datetime import datetime
+import pandas as pd
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from config import MODEL_DIR
 
-# Get model directory
-MODEL_DIR = Path(__file__).parent / "models"
+# Models and artifacts
+models = {}
 
-# Initialize FastAPI app
+class EnergyPredictionInput(BaseModel):
+    appliance_id: str = Field(..., example="FRIDGE_1")
+    appliance_category: str = Field(..., example="kitchen")
+    hour: int = Field(..., ge=0, le=23)
+    day_of_week: int = Field(..., ge=0, le=6)
+    day_of_month: int = Field(..., ge=1, le=31)
+    month: int = Field(..., ge=1, le=12)
+    quarter: Optional[int] = None
+    is_weekend: int = Field(..., ge=0, le=1)
+    power_max: float = Field(..., gt=0)
+    power_rolling_mean_24: float = 1000.0
+    power_rolling_std_24: float = 500.0
+
+class DisparityPredictionInput(BaseModel):
+    appliance_id: str = Field(..., example="FRIDGE_1")
+    appliance_category: str = Field(..., example="kitchen")
+    hour: int = Field(..., ge=0, le=23)
+    day_of_week: int = Field(..., ge=0, le=6)
+    day_of_month: int = Field(..., ge=1, le=31)
+    month: int = Field(..., ge=1, le=12)
+    is_weekend: int = Field(..., ge=0, le=1)
+    power_reading: float = Field(..., gt=0)
+    power_max: float = Field(..., gt=0)
+    power_std_6h: float = 0.0
+    power_mean_6h: float = 0.0
+    power_std_12h: float = 0.0
+    power_mean_12h: float = 0.0
+    power_std_24h: float = 0.0
+    power_mean_24h: float = 0.0
+
+def encode_features(data: List[Union[EnergyPredictionInput, DisparityPredictionInput]], model_type: str) -> pd.DataFrame:
+    df = pd.DataFrame([item.dict() for item in data])
+
+    # Common categorical encoding
+    if "encoders" in models:
+        for col in ["appliance_id", "appliance_category"]:
+            if col in models["encoders"]:
+                le = models["encoders"][col]
+                # Handle unknown categories
+                df[f"{col}_encoded"] = df[col].apply(
+                    lambda x: le.transform([x])[0] if x in le.classes_ else 0
+                )
+
+    if model_type == "energy":
+        # Calculate quarter if not provided
+        if df["quarter"].isnull().any():
+            df["quarter"] = (df["month"] - 1) // 3 + 1
+
+        # Calculate power_ratio
+        df["power_ratio"] = df["power_rolling_mean_24"] / (df["power_max"] + 1)
+
+        # Return features in correct order
+        return df[models["energy_features"]]
+
+    elif model_type == "disparity":
+        # Feature columns as expected by the model
+        feature_cols = [
+            'hour', 'day_of_week', 'day_of_month', 'month', 'is_weekend',
+            'appliance_id_encoded', 'appliance_category_encoded',
+            'power_reading', 'power_max',
+            'power_std_6h', 'power_mean_6h',
+            'power_std_12h', 'power_mean_12h',
+            'power_std_24h', 'power_mean_24h'
+        ]
+        return df[feature_cols]
+
+    return df
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load Energy model (XGBoost)
+    try:
+        energy_model_path = MODEL_DIR / "xgb_energy_model.pkl"
+        energy_features_path = MODEL_DIR / "feature_names.pkl"
+        if energy_model_path.exists():
+            models["energy"] = joblib.load(energy_model_path)
+            models["energy_features"] = joblib.load(energy_features_path)
+            print("✓ Energy model loaded")
+        else:
+            print("⚠ Energy model artifacts missing")
+    except Exception as e:
+        print(f"✗ Error loading Energy model: {e}")
+
+    # Load Disparity model (GradientBoosting)
+    try:
+        disparity_model_path = MODEL_DIR / "power_disparity_model.pkl"
+        disparity_scaler_path = MODEL_DIR / "feature_scaler.pkl"
+        if disparity_model_path.exists():
+            models["disparity"] = joblib.load(disparity_model_path)
+            models["disparity_scaler"] = joblib.load(disparity_scaler_path)
+            print("✓ Disparity model loaded")
+        else:
+            print("⚠ Disparity model artifacts missing")
+    except Exception as e:
+        print(f"✗ Error loading Disparity model: {e}")
+
+    # Load common encoders
+    try:
+        encoders_path = MODEL_DIR / "label_encoders.pkl"
+        if encoders_path.exists():
+            models["encoders"] = joblib.load(encoders_path)
+            print("✓ Categorical encoders loaded")
+        else:
+            print("⚠ Label encoders missing")
+    except Exception as e:
+        print(f"✗ Error loading encoders: {e}")
+
+    yield
+    # Clean up if needed
+    models.clear()
+
 app = FastAPI(
-    title="Energy Consumption Predictor",
-    description="XGBoost-based appliance energy consumption prediction API",
-    version="1.0.0"
+    title="Unified Energy API",
+    description="Unified API for Energy Consumption and Power Disparity Prediction",
+    version="2.0.0",
+    lifespan=lifespan
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,298 +142,157 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global variables for loaded model
-model = None
-label_encoders = None
-feature_names = None
-
-
-class PredictionInput(BaseModel):
-    """Input schema for prediction"""
-    appliance_id: str = Field(..., example="FRIDGE_1")
-    appliance_category: str = Field(..., example="kitchen")
-    hour: int = Field(..., ge=0, le=23, example=14)
-    day_of_week: int = Field(..., ge=0, le=6, example=2)
-    day_of_month: int = Field(..., ge=1, le=31, example=15)
-    month: int = Field(..., ge=1, le=12, example=6)
-    quarter: int = Field(..., ge=1, le=4, example=2)
-    is_weekend: int = Field(..., ge=0, le=1, example=0)
-    power_max: float = Field(..., gt=0, example=2500.0)
-    power_rolling_mean_24: Optional[float] = Field(default=1000.0, gt=0)
-    power_rolling_std_24: Optional[float] = Field(default=500.0, ge=0)
-
-
-class BatchPredictionInput(BaseModel):
-    """Input schema for batch predictions"""
-    predictions: List[PredictionInput]
-
-
-class PredictionOutput(BaseModel):
-    """Output schema for predictions"""
-    predicted_power_w: float
-    confidence: float
-    timestamp: str
-
-
-class HealthCheck(BaseModel):
-    """Health check response"""
-    status: str
-    model_loaded: bool
-    timestamp: str
-
-
-def load_model_artifacts():
-    """Load model and artifacts on startup"""
-    global model, label_encoders, feature_names
-    
-    try:
-        model_path = MODEL_DIR / "xgb_energy_model.pkl"
-        encoders_path = MODEL_DIR / "label_encoders.pkl"
-        features_path = MODEL_DIR / "feature_names.pkl"
-        
-        if not model_path.exists():
-            print(f"⚠ Model not found at {model_path}")
-            return False
-        
-        model = joblib.load(model_path)
-        label_encoders = joblib.load(encoders_path)
-        feature_names = joblib.load(features_path)
-        
-        print(f"✓ Model loaded successfully")
-        print(f"  Features: {len(feature_names)}")
-        print(f"  Encoders: {list(label_encoders.keys())}")
-        
-        return True
-    except Exception as e:
-        print(f"✗ Error loading model: {e}")
-        return False
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Load model on startup"""
-    if load_model_artifacts():
-        print("✓ API ready for predictions")
-    else:
-        print("⚠ API starting but model not loaded")
-
-
-@app.get("/", tags=["Info"])
-async def root():
-    """Root endpoint"""
-    return {
-        "name": "Energy Consumption Predictor API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "endpoints": {
-            "health": "/health",
-            "predict_single": "/predict",
-            "predict_batch": "/predict/batch",
-            "model_info": "/model/info"
-        }
-    }
-
-
-@app.get("/health", response_model=HealthCheck, tags=["Health"])
+@app.get("/health", tags=["System"])
 async def health_check():
-    """Health check endpoint"""
     return {
-        "status": "healthy",
-        "model_loaded": model is not None,
+        "status": "online",
+        "models_loaded": [k for k in models.keys() if not k.endswith("_features") and not k.endswith("_scaler")],
         "timestamp": datetime.now().isoformat()
     }
 
-
-@app.get("/model/info", tags=["Model"])
+@app.get("/model/info", tags=["System"])
 async def model_info():
-    """Get model information"""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
     return {
-        "model_type": "XGBoost Regressor",
-        "n_estimators": model.n_estimators,
-        "max_depth": model.max_depth,
-        "features": feature_names,
-        "n_features": len(feature_names),
-        "encoders": list(label_encoders.keys()),
-        "status": "ready"
+        "energy_model": {
+            "loaded": "energy" in models,
+            "type": "XGBoost Regressor",
+            "features": models.get("energy_features", [])
+        },
+        "disparity_model": {
+            "loaded": "disparity" in models,
+            "type": "GradientBoosting Regressor"
+        }
     }
 
+@app.post("/predict/energy", tags=["Predictions"])
+async def predict_energy(inputs: Union[EnergyPredictionInput, List[EnergyPredictionInput]]):
+    if "energy" not in models:
+        raise HTTPException(status_code=503, detail="Energy model not loaded")
 
-def encode_input(input_data: PredictionInput) -> np.ndarray:
-    """Encode input data for prediction"""
-    try:
-        # Encode categorical features
-        appliance_id_encoded = label_encoders['appliance_id'].transform(
-            [input_data.appliance_id]
-        )[0]
-        
-        try:
-            appliance_category_encoded = label_encoders['appliance_category'].transform(
-                [input_data.appliance_category]
-            )[0]
-        except:
-            # If category not in encoder, use most common (0)
-            appliance_category_encoded = 0
-        
-        # Calculate power_ratio
-        power_ratio = input_data.power_rolling_mean_24 / (input_data.power_max + 1)
-        
-        # Create feature vector in correct order
-        features = np.array([[
-            input_data.hour,
-            input_data.day_of_week,
-            input_data.day_of_month,
-            input_data.month,
-            input_data.quarter,
-            input_data.is_weekend,
-            appliance_id_encoded,
-            appliance_category_encoded,
-            input_data.power_max,
-            power_ratio,
-            input_data.power_rolling_mean_24,
-            input_data.power_rolling_std_24
-        ]])
-        
-        return features
-    except Exception as e:
-        raise ValueError(f"Error encoding features: {str(e)}")
-
-
-@app.post("/predict", response_model=PredictionOutput, tags=["Predictions"])
-async def predict(input_data: PredictionInput):
-    """Predict energy consumption for a single appliance"""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+    is_batch = isinstance(inputs, list)
+    data_list = inputs if is_batch else [inputs]
     
     try:
-        # Encode input
-        features = encode_input(input_data)
+        start_time = datetime.now()
+        features_df = encode_features(data_list, "energy")
+        predictions = models["energy"].predict(features_df)
         
-        # Make prediction
-        prediction = model.predict(features)[0]
-        
-        # Ensure positive prediction
-        predicted_power = max(0, float(prediction))
-        
-        # Simple confidence score (0-100)
-        # Based on prediction within typical range
-        confidence = min(100, max(0, 100 - abs(predicted_power - input_data.power_max) / input_data.power_max * 50))
-        
-        return PredictionOutput(
-            predicted_power_w=round(predicted_power, 2),
-            confidence=round(confidence, 2),
-            timestamp=datetime.now().isoformat()
-        )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
-
-
-@app.post("/predict/batch", tags=["Predictions"])
-async def predict_batch(batch_input: BatchPredictionInput):
-    """Predict energy consumption for multiple appliances"""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
-    try:
         results = []
-        
-        for input_data in batch_input.predictions:
-            # Encode input
-            features = encode_input(input_data)
-            
-            # Make prediction
-            prediction = model.predict(features)[0]
-            predicted_power = max(0, float(prediction))
-            confidence = min(100, max(0, 100 - abs(predicted_power - input_data.power_max) / input_data.power_max * 50))
-            
+        for i, pred in enumerate(predictions):
+            pred_val = max(0, float(pred))
+            power_max = data_list[i].power_max
+            confidence = min(100, max(0, 100 - abs(pred_val - power_max) / power_max * 50))
+
             results.append({
-                "appliance_id": input_data.appliance_id,
-                "predicted_power_w": round(predicted_power, 2),
+                "appliance_id": data_list[i].appliance_id,
+                "predicted_power_w": round(pred_val, 2),
                 "confidence": round(confidence, 2)
             })
         
+        latency_ms = (datetime.now() - start_time).total_seconds() * 1000
+        
         return {
+            "results": results if is_batch else results[0],
             "count": len(results),
-            "predictions": results,
+            "latency_ms": round(latency_ms, 2),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Batch prediction error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
 
+@app.post("/predict/disparity", tags=["Predictions"])
+async def predict_disparity(inputs: Union[DisparityPredictionInput, List[DisparityPredictionInput]]):
+    if "disparity" not in models:
+        raise HTTPException(status_code=503, detail="Disparity model not loaded")
+
+    is_batch = isinstance(inputs, list)
+    data_list = inputs if is_batch else [inputs]
+    
+    try:
+        start_time = datetime.now()
+        features_df = encode_features(data_list, "disparity")
+        
+        # Scaling
+        features_scaled = models["disparity_scaler"].transform(features_df)
+        predictions = models["disparity"].predict(features_scaled)
+
+        results = []
+        for i, pred in enumerate(predictions):
+            pred_val = max(0, float(pred))
+            power_reading = data_list[i].power_reading
+            power_max = data_list[i].power_max
+
+            confidence = min(100, max(0, 100 * (1 - abs(pred_val / (power_max + 1)))))
+            cv = (pred_val / power_reading * 100) if power_reading > 0 else 0
+            
+            risk_level = "HIGH" if cv > 80 else ("MEDIUM" if cv > 40 else "LOW")
+            
+            results.append({
+                "appliance_id": data_list[i].appliance_id,
+                "predicted_disparity_w": round(pred_val, 2),
+                "confidence": round(confidence, 2),
+                "risk_level": risk_level
+            })
+
+        latency_ms = (datetime.now() - start_time).total_seconds() * 1000
+
+        return {
+            "results": results if is_batch else results[0],
+            "count": len(results),
+            "latency_ms": round(latency_ms, 2),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
 
 @app.post("/simulate", tags=["Simulation"])
 async def simulate_hourly(appliance_id: str, category: str, date: str = "2021-06-15"):
-    """Simulate predictions for an entire day (24 hours)"""
-    if model is None:
-        raise HTTPException(status_code=503, detail="Model not loaded")
+    if "energy" not in models:
+        raise HTTPException(status_code=503, detail="Energy model not loaded")
     
     try:
-        from datetime import datetime as dt
-        
-        date_obj = dt.strptime(date, "%Y-%m-%d")
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
         day_of_week = date_obj.weekday()
         day_of_month = date_obj.day
         month = date_obj.month
-        quarter = (month - 1) // 3 + 1
         is_weekend = 1 if day_of_week >= 5 else 0
         
-        hourly_predictions = []
-        
-        for hour in range(24):
-            input_data = PredictionInput(
+        # Prepare batch for 24 hours
+        simulation_inputs = [
+            EnergyPredictionInput(
                 appliance_id=appliance_id,
                 appliance_category=category,
-                hour=hour,
+                hour=h,
                 day_of_week=day_of_week,
                 day_of_month=day_of_month,
                 month=month,
-                quarter=quarter,
                 is_weekend=is_weekend,
                 power_max=2500.0,
                 power_rolling_mean_24=1000.0,
                 power_rolling_std_24=500.0
-            )
-            
-            features = encode_input(input_data)
-            prediction = model.predict(features)[0]
-            
-            hourly_predictions.append({
-                "hour": hour,
-                "predicted_power_w": round(max(0, float(prediction)), 2)
-            })
+            ) for h in range(24)
+        ]
+
+        features_df = encode_features(simulation_inputs, "energy")
+        predictions = models["energy"].predict(features_df)
+
+        hourly_results = [
+            {"hour": h, "predicted_power_w": round(max(0, float(predictions[h])), 2)}
+            for h in range(24)
+        ]
+
+        total_energy_kwh = sum(p["predicted_power_w"] for p in hourly_results) / 1000
         
         return {
             "appliance_id": appliance_id,
             "category": category,
             "date": date,
-            "hourly_predictions": hourly_predictions,
-            "total_energy_kwh": round(sum([p["predicted_power_w"] for p in hourly_predictions]) / 1000, 2)
+            "hourly_predictions": hourly_results,
+            "total_energy_kwh": round(total_energy_kwh, 2)
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Simulation error: {str(e)}")
 
-
-@app.get("/docs", include_in_schema=False)
-async def get_docs():
-    """Swagger UI documentation"""
-    pass
-
-
 if __name__ == "__main__":
     import uvicorn
-    
-    print("\n" + "="*70)
-    print("STARTING ENERGY PREDICTION API")
-    print("="*70)
-    print("\nAPI Documentation: http://localhost:8000/docs")
-    print("API Health Check: http://localhost:8000/health")
-    print("="*70 + "\n")
-    
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000,
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000)

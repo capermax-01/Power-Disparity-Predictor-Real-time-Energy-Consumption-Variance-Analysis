@@ -14,10 +14,12 @@ import joblib
 from pathlib import Path
 import json
 import warnings
+from config import DB_PATH, MODEL_DIR, DISPARITY_SAMPLE_SIZE, TEST_SIZE, RANDOM_STATE
+
 warnings.filterwarnings('ignore')
 
 class ModelTrainer:
-    def __init__(self, db_path, model_dir):
+    def __init__(self, db_path=DB_PATH, model_dir=MODEL_DIR):
         self.db_path = db_path
         self.model_dir = Path(model_dir)
         self.model_dir.mkdir(exist_ok=True)
@@ -253,10 +255,7 @@ class ModelTrainer:
 
 
 def main():
-    db_path = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\appliances_consolidated.db"
-    model_dir = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\models"
-    
-    trainer = ModelTrainer(db_path, model_dir)
+    trainer = ModelTrainer()
     metrics = trainer.run_complete_training()
     
     print("\n" + "="*80)

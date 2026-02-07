@@ -8,17 +8,16 @@ import pandas as pd
 import sqlite3
 from pathlib import Path
 import warnings
+from config import DB_PATH, CSV_PATH, ARCHIVE_DIR
+
 warnings.filterwarnings('ignore')
 
 class ApplianceDataConsolidator:
-    def __init__(self, archive_dir, output_dir):
+    def __init__(self, archive_dir=ARCHIVE_DIR, db_path=DB_PATH, csv_path=CSV_PATH):
         self.archive_dir = Path(archive_dir)
-        self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
-        
-        # Database paths
-        self.db_path = self.output_dir / "appliances_consolidated.db"
-        self.csv_path = self.output_dir / "appliances_consolidated.csv"
+        self.db_path = Path(db_path)
+        self.csv_path = Path(csv_path)
+        self.db_path.parent.mkdir(exist_ok=True)
         
     def get_appliance_files(self):
         """Get all appliance CSV files from archive (excluding the metadata file)"""
@@ -284,10 +283,7 @@ class ApplianceDataConsolidator:
 
 
 def main():
-    archive_dir = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\archive"
-    output_dir = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo"
-    
-    consolidator = ApplianceDataConsolidator(archive_dir, output_dir)
+    consolidator = ApplianceDataConsolidator()
     db_path, csv_path = consolidator.run()
 
 
