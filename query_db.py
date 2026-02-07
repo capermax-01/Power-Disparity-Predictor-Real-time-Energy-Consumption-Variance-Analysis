@@ -5,6 +5,7 @@ Query and analyze the consolidated appliances database
 import sqlite3
 import pandas as pd
 from pathlib import Path
+from config import DB_PATH, SAMPLE_CSV_PATH
 
 class ApplianceDataQuery:
     def __init__(self, db_path):
@@ -104,8 +105,12 @@ class ApplianceDataQuery:
 
 
 def main():
-    db_path = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\appliances_consolidated.db"
+    db_path = DB_PATH
     
+    if not db_path.exists():
+        print(f"⚠ Database not found at {db_path}")
+        return
+
     query_engine = ApplianceDataQuery(db_path)
     
     # Display summary
@@ -115,8 +120,8 @@ def main():
     query_engine.get_database_info()
     
     # Export sample data
-    sample_output = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\appliances_sample_100k.csv"
-    query_engine.export_sample(sample_output, sample_size=100000)
+    sample_output = SAMPLE_CSV_PATH
+    query_engine.export_sample(str(sample_output), sample_size=100000)
     
     print("\n" + "="*80)
     print("✓ DATABASE CONSOLIDATION AND ANALYSIS COMPLETE")

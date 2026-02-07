@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from scipy import stats
 import warnings
+from config import BASE_DIR
+
 warnings.filterwarnings('ignore')
 
 # Set seeds for reproducibility
@@ -359,9 +361,20 @@ class EnergyGAN:
 
 def main():
     # Initialize GAN
-    data_path = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\energy_data.csv"
+    data_path = BASE_DIR / "energy_data.csv"
     
-    gan = EnergyGAN(data_path, latent_dim=100)
+    if not data_path.exists():
+        print(f"⚠ Energy data file not found: {data_path}")
+        # Try a sample file if available
+        sample_path = BASE_DIR / "appliances_consolidated.csv"
+        if sample_path.exists():
+            data_path = sample_path
+            print(f"Using consolidated CSV as fallback: {data_path}")
+        else:
+            print("No suitable data file found for GAN demo.")
+            return
+
+    gan = EnergyGAN(str(data_path), latent_dim=100)
     
     # Run complete pipeline
     synthetic_data, metrics = gan.run_pipeline()

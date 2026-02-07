@@ -11,6 +11,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import warnings
+from pathlib import Path
+import sys
+import os
+
+# Add parent directory to path to import config
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config import DB_PATH, BASE_DIR
+
 warnings.filterwarnings('ignore')
 
 class ComprehensiveDisparityAnalysis:
@@ -252,14 +260,14 @@ class ComprehensiveDisparityAnalysis:
 
 
 def main():
-    db_path = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\appliances_consolidated.db"
+    db_path = DB_PATH
     
     analyzer = ComprehensiveDisparityAnalysis(db_path)
     results_df, model_perf = analyzer.run_full_analysis()
     
     # Export results
-    output_file = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\power_disparity_results.csv"
-    results_df.to_csv(output_file, index=False)
+    output_file = BASE_DIR / "power_disparity_results.csv"
+    results_df.to_csv(str(output_file), index=False)
     print(f"\n✓ Results exported to: {output_file}")
     
     print("\n" + "="*80)

@@ -11,6 +11,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import warnings
+import sys
+import os
+
+# Add parent directory to path to import config
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config import DB_PATH
+
 warnings.filterwarnings('ignore')
 
 class PowerDisparityAnalyzer:
@@ -438,7 +445,7 @@ class PowerDisparityAnalyzer:
 
 
 def main():
-    db_path = r"C:\Users\ASUS\OneDrive\Desktop\energy_waste_demo\appliances_consolidated.db"
+    db_path = DB_PATH
     
     analyzer = PowerDisparityAnalyzer(db_path)
     models_results, results_df = analyzer.run_full_pipeline()
