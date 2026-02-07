@@ -1,0 +1,19 @@
+timestamp,device_id,device_category,power_w,occupancy_status,location_floor,location_zone
+2025-02-07T08:00:00,hvac_301,hvac,4200,occupied,Floor 3,Zone A
+2025-02-07T08:00:00,light_301,lighting,1800,occupied,Floor 3,Zone A
+2025-02-07T08:00:00,server_101,server,900,occupied,Floor 1,Server Room
+2025-02-07T10:00:00,hvac_301,hvac,4500,occupied,Floor 3,Zone A
+2025-02-07T10:00:00,light_301,lighting,2000,occupied,Floor 3,Zone A
+2025-02-07T10:00:00,server_101,server,950,occupied,Floor 1,Server Room
+2025-02-07T14:00:00,hvac_301,hvac,4700,occupied,Floor 3,Zone A
+2025-02-07T14:00:00,light_301,lighting,2100,occupied,Floor 3,Zone A
+2025-02-07T14:00:00,server_101,server,950,occupied,Floor 1,Server Room
+2025-02-07T18:00:00,hvac_301,hvac,4600,unoccupied,Floor 3,Zone A
+2025-02-07T18:00:00,light_301,lighting,1900,unoccupied,Floor 3,Zone A
+2025-02-07T18:00:00,server_101,server,950,unoccupied,Floor 1,Server Room
+2025-02-07T20:00:00,hvac_301,hvac,4400,unoccupied,Floor 3,Zone A
+2025-02-07T20:00:00,light_301,lighting,1700,unoccupied,Floor 3,Zone A
+2025-02-07T20:00:00,server_101,server,900,unoccupied,Floor 1,Server Room
+2025-02-07T23:30:00,hvac_301,hvac,1500,unoccupied,Floor 3,Zone A
+2025-02-07T23:30:00,light_301,lighting,600,unoccupied,Floor 3,Zone A
+2025-02-07T23:30:00,server_101,server,900,unoccupied,Floor 1,Server Room
