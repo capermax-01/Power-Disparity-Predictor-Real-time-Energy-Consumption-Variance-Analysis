@@ -312,14 +312,14 @@ if __name__ == "__main__":
     print("\n" + "="*80)
     print("STARTING POWER DISPARITY PREDICTION API")
     print("="*80)
-    print("\nWeb Interface: http://localhost:8000")
-    print("API Docs: http://localhost:8000/docs")
-    print("Health Check: http://localhost:8000/health")
+    print("\nWeb Interface: http://localhost:8001")
+    print("API Docs: http://localhost:8001/docs")
+    print("Health Check: http://localhost:8001/health")
     print("\n" + "="*80 + "\n")
     
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8000,
+        port=8001,
         log_level="info"
     )

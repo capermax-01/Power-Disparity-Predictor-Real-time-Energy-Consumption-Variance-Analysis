@@ -313,6 +313,98 @@ POST /simulate?appliance_id=fridge_207&category=kitchen&date=2021-06-15
 }
 ```
 
+### 6. Energy Waste Analysis (AI-Powered Reasoning)
+```
+POST /analyze-waste
+```
+
+**Request:**
+```json
+{
+  "power_w": 1050.0,
+  "occupancy_status": "occupied",
+  "hour": 14,
+  "season": "summer"
+}
+```
+
+**Response:**
+```json
+{
+  "waste_type": "phantom_load",
+  "risk_level": "high",
+  "cost_impact": {
+    "daily_usd": 0.45,
+    "monthly_usd": 13.50,
+    "annual_usd": 162.00
+  },
+  "explainability": {
+    "reasoning_chain": "Phantom load detected: device consuming significant power while unoccupied.",
+    "signal_strength": 0.92,
+    "occupancy_mismatch": true
+  },
+  "recommended_actions": [
+    "Unplug device when not in use",
+    "Use smart power strips",
+    "Enable sleep mode"
+  ]
+}
+```
+
+---
+
+## 🤖 AI-Based Energy Waste Detection & Reasoning Engine
+
+### Overview
+The application now includes an intelligent reasoning engine that analyzes power consumption patterns and identifies invisible energy waste using explainable AI. Unlike traditional black-box ML models, this system provides **transparent reasoning chains** for every waste detection.
+
+### Waste Detection Capabilities
+
+The reasoning engine identifies **4 types of energy waste:**
+
+1. **Phantom Load** - Devices consuming power while powered off
+2. **Post-Occupancy Waste** - Appliances left running after people leave
+3. **Inefficient Usage** - Misuse or suboptimal settings
+4. **Normal Operation** - No waste detected
+
+### Key Features
+
+✅ **Data Source Agnostic** - Consumes normalized power data from any source  
+✅ **Explainable AI** - Every decision includes reasoning and confidence  
+✅ **Cost Impact** - Automatic calculation of daily/monthly/annual waste costs  
+✅ **Actionable Recommendations** - Specific, tailored action items  
+✅ **Risk Scoring** - Low/Medium/High/Critical severity levels  
+
+### Supported Input Sources
+
+**Current Demo (Manual Input):**
+- Web form on frontend for demonstration purposes
+
+**Production-Ready (Automated Data Sources):**
+- Smart meter APIs (monthly/daily/hourly readings)
+- IoT occupancy sensors (PIR, CO₂, calendar integration)
+- SCADA/BMS systems (building automation)
+- Smart home ecosystems (Alexa, Google Home APIs)
+
+**Key Design Principle:** The reasoning engine is completely data-source agnostic. Manual input simulates smart meter + occupancy sensor data for demo purposes. In production, replace the input layer with automated sources—the AI logic remains unchanged.
+
+### Batch Waste Analysis
+```
+POST /analyze-waste/batch
+```
+
+Analyze multiple appliances in one request for comprehensive household reporting.
+
+---
+
+## 📚 Documentation
+
+For detailed integration instructions and architecture explanation, see:
+- **[DATA_SOURCE_FLEXIBILITY.md](DATA_SOURCE_FLEXIBILITY.md)** - How the system scales from demo to production without code changes
+- **[FRONTEND.md](FRONTEND.md)** - Frontend UI guide and component documentation
+- **[AUDIT_REPORT.md](AUDIT_REPORT.md)** - Comprehensive system audit
+- **[RESULTS_SUMMARY.txt](RESULTS_SUMMARY.txt)** - Performance metrics and test results
+
 ## Example Usage
 
 ### Using Python Requests
