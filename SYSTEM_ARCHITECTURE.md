@@ -444,17 +444,17 @@ disparity = actual_power - baseline_seasonal
 ### Manual Tests (For Hackathon)
 ```bash
 # Test 1: Phantom Load (high power, unoccupied night, long duration)
-curl -X POST http://localhost:8000/analyze-waste \
+curl -X POST http://localhost:8001/analyze-waste \
   -d '{"appliance_id":"SERVER","hour":2,"occupancy_status":"unoccupied",...}'
 # Expected: "phantom_load", HIGH risk, ₹300+/day
 
 # Test 2: Post-Occupancy (high power, unoccupied evening, medium duration)
-curl -X POST http://localhost:8000/analyze-waste \
+curl -X POST http://localhost:8001/analyze-waste \
   -d '{"appliance_id":"LIGHTS","hour":20,"occupancy_status":"unoccupied",...}'
 # Expected: "post_occupancy", MEDIUM risk, ₹40+/day
 
 # Test 3: Normal (low variance, occupied daytime)
-curl -X POST http://localhost:8000/analyze-waste \
+curl -X POST http://localhost:8001/analyze-waste \
   -d '{"appliance_id":"FRIDGE","hour":14,"occupancy_status":"occupied",...}'
 # Expected: "normal", LOW risk
 ```

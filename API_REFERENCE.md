@@ -2,13 +2,13 @@
 
 ## Base URL
 ```
-http://localhost:8000
+http://localhost:8001
 ```
 
 ## Interactive API Documentation
 ```
-http://localhost:8000/docs  (Swagger UI)
-http://localhost:8000/redoc (ReDoc)
+http://localhost:8001/docs  (Swagger UI)
+http://localhost:8001/redoc (ReDoc)
 ```
 
 ---
@@ -387,7 +387,7 @@ ELSE
 
 ### cURL: Single Waste Analysis
 ```bash
-curl -X POST "http://localhost:8000/analyze-waste" \
+curl -X POST "http://localhost:8001/analyze-waste" \
   -H "Content-Type: application/json" \
   -d '{
     "appliance_id": "SERVER_1",
@@ -409,7 +409,7 @@ curl -X POST "http://localhost:8000/analyze-waste" \
 ```python
 import requests
 
-api_url = "http://localhost:8000/analyze-waste/batch"
+api_url = "http://localhost:8001/analyze-waste/batch"
 
 batch_input = {
     "analyses": [
@@ -528,10 +528,10 @@ Pass `cost_per_kwh` in request:
 
 ## 📚 Documentation References
 
-- **Model Details:** `MODEL_POSITIONING.md`
 - **System Design:** `SYSTEM_ARCHITECTURE.md`
-- **Integration:** `IMPLEMENTATION_GUIDE.md`
-- **API Swagger:** http://localhost:8000/docs
+- **Frontend Guide:** `FRONTEND.md`
+- **Data Source Flexibility:** `DATA_SOURCE_FLEXIBILITY.md`
+- **API Swagger:** http://localhost:8001/docs
 
 ---
 

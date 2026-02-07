@@ -76,7 +76,7 @@ Serves the production build locally for testing.
 Edit `src/constants.tsx`:
 
 ```typescript
-export const API_BASE_URL = 'http://localhost:8000';
+export const API_BASE_URL = 'http://localhost:8001';
 ```
 
 For production, point to your deployed backend:
@@ -89,7 +89,7 @@ export const API_BASE_URL = 'https://api.yourdomain.com';
 Create or edit `.env.local`:
 
 ```env
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8001
 VITE_APP_NAME=Power Disparity Predictor
 ```
 
@@ -355,7 +355,7 @@ console.table(dataArray); // Pretty print arrays
 ### API Not Responding
 
 **Check:**
-1. Backend is running: `http://localhost:8000/health`
+1. Backend is running: `http://localhost:8001/health`
 2. Correct API URL in `constants.tsx`
 3. Browser console for detailed error message
 
